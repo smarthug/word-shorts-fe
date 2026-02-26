@@ -27,8 +27,8 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import InfoIcon from '@mui/icons-material/Info';
 
 const tabs = [
-  { label: 'Shorts', icon: <OndemandVideoIcon />, path: '/' },
   { label: 'Deck', icon: <StyleIcon />, path: '/deck' },
+  { label: 'Shorts', icon: <OndemandVideoIcon />, path: '/' },
   { label: 'Quiz', icon: <QuizIcon />, path: '/quiz' },
 ];
 
@@ -103,6 +103,7 @@ export default function AppLayout() {
         value={currentTab === -1 ? 0 : currentTab}
         onChange={(_, newValue) => navigate(tabs[newValue].path)}
         showLabels
+        sx={{ width: '100%' }}
       >
         {tabs.map((tab) => (
           <BottomNavigationAction
