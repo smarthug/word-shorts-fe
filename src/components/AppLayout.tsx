@@ -47,7 +47,7 @@ export default function AppLayout() {
   const currentTab = tabs.findIndex((t) => t.path === location.pathname);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
       {/* AppBar */}
       <AppBar position="static">
         <Toolbar>
