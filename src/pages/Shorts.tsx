@@ -1,7 +1,7 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Virtual, Mousewheel } from 'swiper/modules';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, CircularProgress } from '@mui/material';
 
 // @ts-ignore
 import 'swiper/css';
@@ -12,52 +12,99 @@ const API_BASE = 'https://word-shorts-api.kirklayer6590.workers.dev';
 
 // 10개 단어
 const WORDS = [
-  'Replenish',
-  'Instigate',
-  'Substantiate',
-  'Deliberate',
-  'Strenuous',
-  'Conjunction',
-  'Extant',
-  'Sedentary',
-  'Invoke',
-  'Pervasive',
+  'replenish',
+  'instigate',
+  'substantiate',
+  'deliberate',
+  'strenuous',
+  'conjunction',
+  'extant',
+  'sedentary',
+  'invoke',
+  'pervasive',
 ];
 
-// 10가지 스타일
-const STYLES = [
-  'pastel',
-  'anime',
-  'ghibli',
-  'disney',
-  'comic',
-  'watercolor',
-  'minimalist',
-  'pixel_art',
-  'pop_art',
-  'concept_art',
-];
+interface ImageInfo {
+  style_id: string;
+  style_name: string;
+  path: string;
+  variation: number;
+}
 
-// 이미지 URL 생성
-const getImageUrl = (word: string, style: string) => {
-  const slug = word.toLowerCase();
-  return `${API_BASE}/images/v3/${slug}/${slug}_${style}.png`;
+interface WordData {
+  word: string;
+  slug: string;
+  meaning_en: string;
+  meaning_kr: string;
+  images: ImageInfo[];
+}
+
+// 이미지 URL 생성 (path에서 파일명 추출)
+const getImageUrl = (slug: string, path: string) => {
+  const filename = path.split('/').pop();
+  return `${API_BASE}/images/v3/${slug}/${filename}`;
 };
 
 export default function Shorts() {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [wordDataMap, setWordDataMap] = useState<Record<string, WordData>>({});
+  const [loading, setLoading] = useState(true);
 
-  // 단어별 이미지 슬라이드 데이터
-  const wordSlides = useMemo(() => {
-    return WORDS.map((word) => ({
-      word,
-      images: STYLES.map((style) => ({
-        style,
-        url: getImageUrl(word, style),
-      })),
-    }));
+  // API에서 메타데이터 가져오기
+  useEffect(() => {
+    const fetchAllWords = async () => {
+      setLoading(true);
+      const dataMap: Record<string, WordData> = {};
+      
+      await Promise.all(
+        WORDS.map(async (word) => {
+          try {
+            const res = await fetch(`${API_BASE}/api/vocab/${word}`);
+            if (res.ok) {
+              const data = await res.json();
+              dataMap[word] = data;
+            }
+          } catch (error) {
+            console.error(`Failed to fetch ${word}:`, error);
+          }
+        })
+      );
+      
+      setWordDataMap(dataMap);
+      setLoading(false);
+    };
+
+    fetchAllWords();
   }, []);
+
+  // 단어별 슬라이드 데이터
+  const wordSlides = useMemo(() => {
+    return WORDS.map((slug) => {
+      const data = wordDataMap[slug];
+      if (data) {
+        return {
+          slug,
+          word: data.word,
+          meaning_en: data.meaning_en,
+          meaning_kr: data.meaning_kr,
+          images: data.images.map((img) => ({
+            style: img.style_name,
+            styleId: img.style_id,
+            url: getImageUrl(slug, img.path),
+          })),
+        };
+      }
+      // 데이터 없으면 placeholder
+      return {
+        slug,
+        word: slug.charAt(0).toUpperCase() + slug.slice(1),
+        meaning_en: '',
+        meaning_kr: '',
+        images: [],
+      };
+    });
+  }, [wordDataMap]);
 
   const handleVerticalSlideChange = useCallback((swiper: any) => {
     setCurrentWordIndex(swiper.activeIndex);
@@ -72,6 +119,25 @@ export default function Shorts() {
     },
     [currentWordIndex]
   );
+
+  const currentWord = wordSlides[currentWordIndex];
+  const currentStyle = currentWord?.images[currentImageIndex]?.style || '';
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: '#000',
+        }}
+      >
+        <CircularProgress sx={{ color: '#fff' }} />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ height: '100%', bgcolor: '#000', position: 'relative' }}>
@@ -124,12 +190,11 @@ export default function Shorts() {
         style={{ height: '100%' }}
       >
         {wordSlides.map((wordData, wordIdx) => (
-          <SwiperSlide key={wordData.word} virtualIndex={wordIdx}>
+          <SwiperSlide key={wordData.slug} virtualIndex={wordIdx}>
             <WordSlideContent
               wordData={wordData}
               wordIdx={wordIdx}
               currentWordIndex={currentWordIndex}
-              currentImageIndex={currentImageIndex}
               onHorizontalChange={handleHorizontalSlideChange}
             />
           </SwiperSlide>
@@ -152,7 +217,7 @@ export default function Shorts() {
       >
         {/* 이미지 도트 */}
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          {STYLES.map((_, idx) => (
+          {currentWord?.images.map((_, idx) => (
             <Box
               key={idx}
               sx={{
@@ -170,7 +235,7 @@ export default function Shorts() {
           variant="caption"
           sx={{ color: 'rgba(255,255,255,0.7)' }}
         >
-          {STYLES[currentImageIndex]}
+          {currentStyle}
         </Typography>
       </Box>
     </Box>
@@ -178,11 +243,18 @@ export default function Shorts() {
 }
 
 // 단어 슬라이드 컨텐츠 (메모이제이션)
+interface WordSlideData {
+  slug: string;
+  word: string;
+  meaning_en: string;
+  meaning_kr: string;
+  images: { style: string; styleId: string; url: string }[];
+}
+
 interface WordSlideContentProps {
-  wordData: { word: string; images: { style: string; url: string }[] };
+  wordData: WordSlideData;
   wordIdx: number;
   currentWordIndex: number;
-  currentImageIndex: number;
   onHorizontalChange: (swiper: any, wordIdx: number) => void;
 }
 
@@ -195,13 +267,14 @@ const WordSlideContent = memo(function WordSlideContent({
   // 현재 카드 근처만 horizontal swiper 활성화
   const isNearby = Math.abs(wordIdx - currentWordIndex) <= 1;
 
-  if (!isNearby) {
-    // 멀리 있는 카드는 placeholder만
+  if (!isNearby || wordData.images.length === 0) {
+    // 멀리 있는 카드 또는 이미지 없으면 placeholder
     return (
       <Box
         sx={{
           height: '100%',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           bgcolor: '#111',
@@ -210,6 +283,11 @@ const WordSlideContent = memo(function WordSlideContent({
         <Typography variant="h3" sx={{ color: '#fff' }}>
           {wordData.word}
         </Typography>
+        {wordData.meaning_kr && (
+          <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
+            {wordData.meaning_kr}
+          </Typography>
+        )}
       </Box>
     );
   }
@@ -225,7 +303,7 @@ const WordSlideContent = memo(function WordSlideContent({
     >
       {wordData.images.map((image, slideIdx) => (
         <SwiperSlide key={slideIdx}>
-          <ImageSlide word={wordData.word} image={image} />
+          <ImageSlide wordData={wordData} image={image} />
         </SwiperSlide>
       ))}
     </Swiper>
@@ -234,12 +312,13 @@ const WordSlideContent = memo(function WordSlideContent({
 
 // 이미지 슬라이드 (메모이제이션)
 interface ImageSlideProps {
-  word: string;
-  image: { style: string; url: string };
+  wordData: WordSlideData;
+  image: { style: string; styleId: string; url: string };
 }
 
-const ImageSlide = memo(function ImageSlide({ word, image }: ImageSlideProps) {
+const ImageSlide = memo(function ImageSlide({ wordData, image }: ImageSlideProps) {
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   return (
     <Box
@@ -251,50 +330,74 @@ const ImageSlide = memo(function ImageSlide({ word, image }: ImageSlideProps) {
         justifyContent: 'center',
         bgcolor: '#000',
         position: 'relative',
+        p: 2,
       }}
     >
       {/* 이미지 */}
-      {!imageError ? (
-        <Box
-          component="img"
-          src={image.url}
-          alt={`${word} - ${image.style}`}
-          onError={() => setImageError(true)}
+      <Box sx={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'center' }}>
+        {imageLoading && !imageError && (
+          <CircularProgress sx={{ position: 'absolute', color: 'rgba(255,255,255,0.5)' }} />
+        )}
+        {!imageError ? (
+          <Box
+            component="img"
+            src={image.url}
+            alt={`${wordData.word} - ${image.style}`}
+            onLoad={() => setImageLoading(false)}
+            onError={() => {
+              setImageError(true);
+              setImageLoading(false);
+            }}
+            sx={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              borderRadius: 2,
+              opacity: imageLoading ? 0 : 1,
+              transition: 'opacity 0.3s',
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: '80%',
+              height: '50%',
+              bgcolor: '#222',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography sx={{ color: '#666' }}>이미지 로딩 실패</Typography>
+          </Box>
+        )}
+      </Box>
+
+      {/* 단어 & 뜻 */}
+      <Box sx={{ textAlign: 'center', py: 2 }}>
+        <Typography
+          variant="h4"
           sx={{
-            maxWidth: '100%',
-            maxHeight: '70%',
-            objectFit: 'contain',
-            borderRadius: 2,
-          }}
-        />
-      ) : (
-        <Box
-          sx={{
-            width: '80%',
-            height: '50%',
-            bgcolor: '#222',
-            borderRadius: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            color: '#fff',
+            fontWeight: 'bold',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
           }}
         >
-          <Typography sx={{ color: '#666' }}>Image not found</Typography>
-        </Box>
-      )}
-
-      {/* 단어 */}
-      <Typography
-        variant="h4"
-        sx={{
-          color: '#fff',
-          mt: 3,
-          fontWeight: 'bold',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-        }}
-      >
-        {word}
-      </Typography>
+          {wordData.word}
+        </Typography>
+        {wordData.meaning_kr && (
+          <Typography
+            variant="body1"
+            sx={{
+              color: 'rgba(255,255,255,0.8)',
+              mt: 1,
+            }}
+          >
+            {wordData.meaning_kr}
+          </Typography>
+        )}
+      </Box>
     </Box>
   );
 });
