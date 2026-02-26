@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Virtual, Mousewheel } from 'swiper/modules';
-import { Box, Typography, CircularProgress } from '@mui/material';
+import { Box, Typography, CircularProgress, IconButton } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 // @ts-ignore
 import 'swiper/css';
@@ -45,11 +48,17 @@ const getImageUrl = (slug: string, path: string) => {
   return `${API_BASE}/images/v3/${slug}/${filename}`;
 };
 
+// 네이버 사전 URL 생성
+const getNaverDictUrl = (word: string) => {
+  return `https://en.dict.naver.com/#/search?query=${encodeURIComponent(word)}`;
+};
+
 export default function Shorts() {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [wordDataMap, setWordDataMap] = useState<Record<string, WordData>>({});
   const [loading, setLoading] = useState(true);
+  const [showMeaning, setShowMeaning] = useState(true);
 
   // API에서 메타데이터 가져오기
   useEffect(() => {
@@ -63,7 +72,6 @@ export default function Shorts() {
             const res = await fetch(`${API_BASE}/api/vocab/${word}`);
             if (res.ok) {
               const data = await res.json();
-              console.log(data)
               dataMap[word] = data;
             }
           } catch (error) {
@@ -121,6 +129,17 @@ export default function Shorts() {
     [currentWordIndex]
   );
 
+  const handleToggleMeaning = useCallback(() => {
+    setShowMeaning((prev) => !prev);
+  }, []);
+
+  const handleOpenNaverDict = useCallback(() => {
+    const currentWord = wordSlides[currentWordIndex];
+    if (currentWord) {
+      window.open(getNaverDictUrl(currentWord.word), '_blank');
+    }
+  }, [currentWordIndex, wordSlides]);
+
   const currentWord = wordSlides[currentWordIndex];
 
   if (loading) {
@@ -174,6 +193,62 @@ export default function Shorts() {
         ↑↓ 단어 • ←→ 이미지
       </Box>
 
+      {/* 오른쪽 액션 버튼 (인스타 릴스 스타일) */}
+      <Box
+        sx={{
+          position: 'absolute',
+          right: 12,
+          bottom: '30%',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        {/* 뜻 표시 토글 */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <IconButton
+            onClick={handleToggleMeaning}
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.15)',
+              color: '#fff',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.25)',
+              },
+              width: 48,
+              height: 48,
+            }}
+          >
+            {showMeaning ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </IconButton>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+            {showMeaning ? '뜻 숨기기' : '뜻 보기'}
+          </Typography>
+        </Box>
+
+        {/* 네이버 사전 */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <IconButton
+            onClick={handleOpenNaverDict}
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.15)',
+              color: '#fff',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.25)',
+              },
+              width: 48,
+              height: 48,
+            }}
+          >
+            <MenuBookIcon />
+          </IconButton>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+            사전
+          </Typography>
+        </Box>
+      </Box>
+
       {/* 세로 Swiper: 단어 간 이동 */}
       <Swiper
         direction="vertical"
@@ -195,6 +270,7 @@ export default function Shorts() {
               wordData={wordData}
               wordIdx={wordIdx}
               currentWordIndex={currentWordIndex}
+              showMeaning={showMeaning}
               onHorizontalChange={handleHorizontalSlideChange}
             />
           </SwiperSlide>
@@ -230,13 +306,6 @@ export default function Shorts() {
             />
           ))}
         </Box>
-        {/* 스타일 라벨 */}
-        {/* <Typography
-          variant="caption"
-          sx={{ color: 'rgba(255,255,255,0.7)' }}
-        >
-          {currentStyle}
-        </Typography> */}
       </Box>
     </Box>
   );
@@ -255,6 +324,7 @@ interface WordSlideContentProps {
   wordData: WordSlideData;
   wordIdx: number;
   currentWordIndex: number;
+  showMeaning: boolean;
   onHorizontalChange: (swiper: any, wordIdx: number) => void;
 }
 
@@ -262,6 +332,7 @@ const WordSlideContent = memo(function WordSlideContent({
   wordData,
   wordIdx,
   currentWordIndex,
+  showMeaning,
   onHorizontalChange,
 }: WordSlideContentProps) {
   // 현재 카드 근처만 horizontal swiper 활성화
@@ -284,11 +355,12 @@ const WordSlideContent = memo(function WordSlideContent({
         <Typography variant="h3" sx={{ color: '#fff' }}>
           {wordData.word}
         </Typography>
-        {wordData.meaning_kr && (
+        {showMeaning && wordData.meaning_kr && (
           <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
             {wordData.meaning_kr}
           </Typography>
-        )}{wordData.meaning_en && (
+        )}
+        {showMeaning && wordData.meaning_en && (
           <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
             {wordData.meaning_en}
           </Typography>
@@ -308,7 +380,7 @@ const WordSlideContent = memo(function WordSlideContent({
     >
       {wordData.images.map((image, slideIdx) => (
         <SwiperSlide key={slideIdx}>
-          <ImageSlide wordData={wordData} image={image} />
+          <ImageSlide wordData={wordData} image={image} showMeaning={showMeaning} />
         </SwiperSlide>
       ))}
     </Swiper>
@@ -319,9 +391,10 @@ const WordSlideContent = memo(function WordSlideContent({
 interface ImageSlideProps {
   wordData: WordSlideData;
   image: { style: string; styleId: string; url: string };
+  showMeaning: boolean;
 }
 
-const ImageSlide = memo(function ImageSlide({ wordData, image }: ImageSlideProps) {
+const ImageSlide = memo(function ImageSlide({ wordData, image, showMeaning }: ImageSlideProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
@@ -353,7 +426,7 @@ const ImageSlide = memo(function ImageSlide({ wordData, image }: ImageSlideProps
         >
           {wordData.word}
         </Typography>
-        {wordData.meaning_kr && (
+        {showMeaning && wordData.meaning_kr && (
           <Typography
             variant="body1"
             sx={{
@@ -364,7 +437,7 @@ const ImageSlide = memo(function ImageSlide({ wordData, image }: ImageSlideProps
             {wordData.meaning_kr}
           </Typography>
         )}
-        {wordData.meaning_en && (
+        {showMeaning && wordData.meaning_en && (
           <Typography
             variant="body2"
             sx={{
