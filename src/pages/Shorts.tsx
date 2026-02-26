@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Virtual, Mousewheel } from 'swiper/modules';
 import { Box, Typography, CircularProgress, IconButton } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 
 // @ts-ignore
 import 'swiper/css';
@@ -53,12 +54,30 @@ const getNaverDictUrl = (word: string) => {
   return `https://en.dict.naver.com/#/search?query=${encodeURIComponent(word)}`;
 };
 
+// TTS 재생 함수
+const speakWord = (word: string) => {
+  if ('speechSynthesis' in window) {
+    // 이전 발화 취소
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  }
+};
+
 export default function Shorts() {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [wordDataMap, setWordDataMap] = useState<Record<string, WordData>>({});
   const [loading, setLoading] = useState(true);
   const [showMeaning, setShowMeaning] = useState(true);
+  const [ttsEnabled] = useState(true);
+  
+  // 스와이프 TTS 재생 추적용
+  const lastSpokenRef = useRef<string>('');
 
   // API에서 메타데이터 가져오기
   useEffect(() => {
@@ -124,9 +143,19 @@ export default function Shorts() {
     (swiper: any, wordIdx: number) => {
       if (wordIdx === currentWordIndex) {
         setCurrentImageIndex(swiper.activeIndex);
+        
+        // 가로 스와이프 시 TTS 재생
+        if (ttsEnabled) {
+          const word = wordSlides[wordIdx]?.word;
+          const key = `${wordIdx}-${swiper.activeIndex}`;
+          if (word && lastSpokenRef.current !== key) {
+            lastSpokenRef.current = key;
+            speakWord(word);
+          }
+        }
       }
     },
-    [currentWordIndex]
+    [currentWordIndex, ttsEnabled, wordSlides]
   );
 
   const handleToggleMeaning = useCallback(() => {
@@ -137,6 +166,13 @@ export default function Shorts() {
     const currentWord = wordSlides[currentWordIndex];
     if (currentWord) {
       window.open(getNaverDictUrl(currentWord.word), '_blank');
+    }
+  }, [currentWordIndex, wordSlides]);
+
+  const handleSpeakWord = useCallback(() => {
+    const currentWord = wordSlides[currentWordIndex];
+    if (currentWord) {
+      speakWord(currentWord.word);
     }
   }, [currentWordIndex, wordSlides]);
 
@@ -206,6 +242,27 @@ export default function Shorts() {
           gap: 2,
         }}
       >
+        {/* TTS 발음 듣기 */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <IconButton
+            onClick={handleSpeakWord}
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.15)',
+              color: '#fff',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.25)',
+              },
+              width: 48,
+              height: 48,
+            }}
+          >
+            <VolumeUpIcon />
+          </IconButton>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+            발음
+          </Typography>
+        </Box>
+
         {/* 뜻 표시 토글 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <IconButton
