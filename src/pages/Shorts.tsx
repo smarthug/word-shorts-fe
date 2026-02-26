@@ -63,6 +63,7 @@ export default function Shorts() {
             const res = await fetch(`${API_BASE}/api/vocab/${word}`);
             if (res.ok) {
               const data = await res.json();
+              console.log(data)
               dataMap[word] = data;
             }
           } catch (error) {
@@ -231,12 +232,12 @@ export default function Shorts() {
           ))}
         </Box>
         {/* 스타일 라벨 */}
-        <Typography
+        {/* <Typography
           variant="caption"
           sx={{ color: 'rgba(255,255,255,0.7)' }}
         >
           {currentStyle}
-        </Typography>
+        </Typography> */}
       </Box>
     </Box>
   );
@@ -276,8 +277,9 @@ const WordSlideContent = memo(function WordSlideContent({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
           bgcolor: '#111',
+          pt: 8,
         }}
       >
         <Typography variant="h3" sx={{ color: '#fff' }}>
@@ -286,6 +288,10 @@ const WordSlideContent = memo(function WordSlideContent({
         {wordData.meaning_kr && (
           <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
             {wordData.meaning_kr}
+          </Typography>
+        )}{wordData.meaning_en && (
+          <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
+            {wordData.meaning_en}
           </Typography>
         )}
       </Box>
@@ -327,55 +333,17 @@ const ImageSlide = memo(function ImageSlide({ wordData, image }: ImageSlideProps
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         bgcolor: '#000',
         position: 'relative',
-        p: 2,
+        px: 2,
+        pt: 8,
+        pb: 2,
+        boxSizing: 'border-box',
       }}
     >
-      {/* 이미지 */}
-      <Box sx={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'center' }}>
-        {imageLoading && !imageError && (
-          <CircularProgress sx={{ position: 'absolute', color: 'rgba(255,255,255,0.5)' }} />
-        )}
-        {!imageError ? (
-          <Box
-            component="img"
-            src={image.url}
-            alt={`${wordData.word} - ${image.style}`}
-            onLoad={() => setImageLoading(false)}
-            onError={() => {
-              setImageError(true);
-              setImageLoading(false);
-            }}
-            sx={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
-              borderRadius: 2,
-              opacity: imageLoading ? 0 : 1,
-              transition: 'opacity 0.3s',
-            }}
-          />
-        ) : (
-          <Box
-            sx={{
-              width: '80%',
-              height: '50%',
-              bgcolor: '#222',
-              borderRadius: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography sx={{ color: '#666' }}>이미지 로딩 실패</Typography>
-          </Box>
-        )}
-      </Box>
-
       {/* 단어 & 뜻 */}
-      <Box sx={{ textAlign: 'center', py: 2 }}>
+      <Box sx={{ textAlign: 'center', py: 2, zIndex: 5 }}>
         <Typography
           variant="h4"
           sx={{
@@ -396,6 +364,62 @@ const ImageSlide = memo(function ImageSlide({ wordData, image }: ImageSlideProps
           >
             {wordData.meaning_kr}
           </Typography>
+        )}
+        {wordData.meaning_en && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'rgba(255,255,255,0.6)',
+              mt: 0.5,
+              fontStyle: 'italic',
+            }}
+          >
+            {wordData.meaning_en}
+          </Typography>
+        )}
+      </Box>
+
+      {/* 이미지 */}
+      <Box sx={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'center' }}>
+        {imageLoading && !imageError && (
+          <CircularProgress sx={{ position: 'absolute', color: 'rgba(255,255,255,0.5)' }} />
+        )}
+        {!imageError ? (
+          <Box
+            component="img"
+            src={image.url}
+            alt={`${wordData.word} - ${image.style}`}
+            onLoad={() => setImageLoading(false)}
+            onError={() => {
+              setImageError(true);
+              setImageLoading(false);
+            }}
+            sx={{
+              width: '100%',
+              maxWidth: 500,
+              aspectRatio: '1 / 1',
+              objectFit: 'cover',
+              borderRadius: 4,
+              opacity: imageLoading ? 0 : 1,
+              transition: 'opacity 0.3s',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 500,
+              aspectRatio: '1 / 1',
+              bgcolor: '#222',
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography sx={{ color: '#666' }}>이미지 로딩 실패</Typography>
+          </Box>
         )}
       </Box>
     </Box>
