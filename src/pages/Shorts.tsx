@@ -355,13 +355,13 @@ const WordSlideContent = memo(function WordSlideContent({
         <Typography variant="h3" sx={{ color: '#fff' }}>
           {wordData.word}
         </Typography>
-        {showMeaning && wordData.meaning_kr && (
-          <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
+        {wordData.meaning_kr && (
+          <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1, opacity: showMeaning ? 1 : 0, transition: 'opacity 0.2s' }}>
             {wordData.meaning_kr}
           </Typography>
         )}
-        {showMeaning && wordData.meaning_en && (
-          <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
+        {wordData.meaning_en && (
+          <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1, opacity: showMeaning ? 1 : 0, transition: 'opacity 0.2s' }}>
             {wordData.meaning_en}
           </Typography>
         )}
@@ -426,24 +426,28 @@ const ImageSlide = memo(function ImageSlide({ wordData, image, showMeaning }: Im
         >
           {wordData.word}
         </Typography>
-        {showMeaning && wordData.meaning_kr && (
+        {wordData.meaning_kr && (
           <Typography
             variant="body1"
             sx={{
               color: 'rgba(255,255,255,0.8)',
               mt: 1,
+              opacity: showMeaning ? 1 : 0,
+              transition: 'opacity 0.2s',
             }}
           >
             {wordData.meaning_kr}
           </Typography>
         )}
-        {showMeaning && wordData.meaning_en && (
+        {wordData.meaning_en && (
           <Typography
             variant="body2"
             sx={{
               color: 'rgba(255,255,255,0.6)',
               mt: 0.5,
               fontStyle: 'italic',
+              opacity: showMeaning ? 1 : 0,
+              transition: 'opacity 0.2s',
             }}
           >
             {wordData.meaning_en}
