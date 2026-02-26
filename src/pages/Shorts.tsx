@@ -122,7 +122,6 @@ export default function Shorts() {
   );
 
   const currentWord = wordSlides[currentWordIndex];
-  const currentStyle = currentWord?.images[currentImageIndex]?.style || '';
 
   if (loading) {
     return (
