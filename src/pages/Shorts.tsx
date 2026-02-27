@@ -59,9 +59,23 @@ const speakWord = (word: string) => {
   if ('speechSynthesis' in window) {
     // 이전 발화 취소
     window.speechSynthesis.cancel();
-    
+
     const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = 'en-US';
+
+    // 사용 가능한 음성 목록 가져오기
+    const voices = window.speechSynthesis.getVoices();
+    console.log(voices);
+    // 영어 음성들만 필터링 (en-US, en-GB 등)
+    const enVoices = voices.filter(v => v.lang.startsWith('en'));
+
+    if (enVoices.length > 0) {
+      // 랜덤하게 하나 선택
+      const randomVoice = enVoices[Math.floor(Math.random() * enVoices.length)];
+      utterance.voice = randomVoice;
+    } else {
+      utterance.lang = 'en-US';
+    }
+
     utterance.rate = 0.9;
     utterance.pitch = 1;
     window.speechSynthesis.speak(utterance);
@@ -75,7 +89,7 @@ export default function Shorts() {
   const [loading, setLoading] = useState(true);
   const [showMeaning, setShowMeaning] = useState(true);
   const [ttsEnabled] = useState(true);
-  
+
   // 스와이프 TTS 재생 추적용
   const lastSpokenRef = useRef<string>('');
 
@@ -84,7 +98,7 @@ export default function Shorts() {
     const fetchAllWords = async () => {
       setLoading(true);
       const dataMap: Record<string, WordData> = {};
-      
+
       await Promise.all(
         WORDS.map(async (word) => {
           try {
@@ -98,7 +112,7 @@ export default function Shorts() {
           }
         })
       );
-      
+
       setWordDataMap(dataMap);
       setLoading(false);
     };
@@ -135,15 +149,26 @@ export default function Shorts() {
   }, [wordDataMap]);
 
   const handleVerticalSlideChange = useCallback((swiper: any) => {
-    setCurrentWordIndex(swiper.activeIndex);
+    const newIdx = swiper.activeIndex;
+    setCurrentWordIndex(newIdx);
     setCurrentImageIndex(0);
-  }, []);
+
+    // 세로 스와이프 시 TTS 재생
+    if (ttsEnabled) {
+      const word = wordSlides[newIdx]?.word;
+      const key = `${newIdx}-0`;
+      if (word && lastSpokenRef.current !== key) {
+        lastSpokenRef.current = key;
+        speakWord(word);
+      }
+    }
+  }, [ttsEnabled, wordSlides]);
 
   const handleHorizontalSlideChange = useCallback(
     (swiper: any, wordIdx: number) => {
       if (wordIdx === currentWordIndex) {
         setCurrentImageIndex(swiper.activeIndex);
-        
+
         // 가로 스와이프 시 TTS 재생
         if (ttsEnabled) {
           const word = wordSlides[wordIdx]?.word;
