@@ -26,7 +26,22 @@ const WORDS = [
   'sedentary',
   'invoke',
   'pervasive',
+  'irrevocable',
+  'superficially',
+  'stunted',
+  'malleable',
+  'encroachment',
+  'conjure',
+  'refine',
+  'atone',
+  'amends',
+  'offset',
+  'vanquish',
+  'sturdy',
+  'exterminate',
+  'robust'
 ];
+
 
 interface ImageInfo {
   style_id: string;
