@@ -79,7 +79,7 @@ const speakWord = (word: string) => {
 
     // 사용 가능한 음성 목록 가져오기
     const voices = window.speechSynthesis.getVoices();
-    console.log(voices);
+    // console.log(voices);
     // 영어 음성들만 필터링 (en-US, en-GB 등)
     const enVoices = voices.filter(v => v.lang.startsWith('en'));
 
