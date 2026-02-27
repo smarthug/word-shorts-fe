@@ -14,32 +14,25 @@ import 'swiper/css/virtual';
 
 const API_BASE = 'https://word-shorts-api.kirklayer6590.workers.dev';
 
-// 10개 단어
+// 124개 단어
 const WORDS = [
-  'replenish',
-  'instigate',
-  'substantiate',
-  'deliberate',
-  'strenuous',
-  'conjunction',
-  'extant',
-  'sedentary',
-  'invoke',
-  'pervasive',
-  'irrevocable',
-  'superficially',
-  'stunted',
-  'malleable',
-  'encroachment',
-  'conjure',
-  'refine',
-  'atone',
-  'amends',
-  'offset',
-  'vanquish',
-  'sturdy',
-  'exterminate',
-  'robust'
+  'abrupt', 'absurd', 'account-for', 'afford', 'affordable', 'aftereffect', 'aftermath', 'allocate',
+  'amends', 'annihilate', 'ascend', 'ascendant', 'assure', 'astoundingly', 'atone', 'authenticate',
+  'call-upon', 'colossal', 'compensate-for', 'comprehensive', 'comprise', 'conclusive', 'conjunction',
+  'conjure', 'conspicuous', 'constitute', 'contemporary', 'contour', 'contradiction', 'conventionally',
+  'conversely', 'count-on', 'decline', 'deliberate', 'depend-on', 'diffuse', 'discard', 'dominant',
+  'drastically', 'eliminate', 'emanate', 'encourage', 'encroachment', 'engrave', 'entire', 'evaluate',
+  'examine', 'exclude', 'exploit', 'extant', 'exterminate', 'externally', 'fluctuation', 'genuine',
+  'grow-accustomed-to', 'hamper', 'hinder', 'heterogeneous', 'implausible', 'impressive', 'indigenous',
+  'inhabit', 'instigate', 'intrigue', 'intrusion', 'investigate', 'invoke', 'irrevocable', 'justified',
+  'keep-out-of', 'leave-out', 'look-into', 'magnify', 'malleable', 'matchless', 'mature', 'mean',
+  'mechanics', 'monotonous', 'neglect', 'notable', 'no-wonder', 'obsess', 'obsession-with', 'offset',
+  'optimize', 'paradox', 'particular', 'peerless', 'perfect', 'pervasive', 'pillar', 'pinpoint',
+  'postulate', 'prolific', 'prominent', 'promptly', 'recall', 'refine', 'regard', 'regarding',
+  'replenish', 'robust', 'sedentary', 'sequentially', 'sleek', 'slight', 'solid', 'straightaway',
+  'strenuous', 'stunted', 'sturdy', 'subdue', 'substantial', 'substantiate', 'successively',
+  'superficially', 'supplant', 'susceptible-to', 'unprecedented', 'unrivaled', 'unsophisticated',
+  'vanquish', 'virtually'
 ];
 
 
