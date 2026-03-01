@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import AppLayout from './components/AppLayout';
 import Shorts from './pages/Shorts';
 import Deck from './pages/Deck';
-import Quiz from './pages/Quiz';
+import Table from './pages/Table';
 import { useDeckStore } from './store/deckStore';
 
 function App() {
@@ -18,7 +18,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Shorts />} />
         <Route path="/deck" element={<Deck />} />
-        <Route path="/quiz" element={<Quiz />} />
+        <Route path="/table" element={<Table />} />
       </Route>
     </Routes>
   );
