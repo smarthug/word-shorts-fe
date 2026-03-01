@@ -9,7 +9,16 @@ import {
   Paper,
   IconButton,
 } from '@mui/material';
-import { Search, ChevronLeft, ChevronRight, Visibility, VisibilityOff } from '@mui/icons-material';
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Visibility,
+  VisibilityOff,
+  HelpOutline,
+  School,
+  CheckCircle,
+} from '@mui/icons-material';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useDeckStore } from '../store/deckStore';
 import type { MemorizationStage, Word } from '../types/deck';
@@ -20,10 +29,11 @@ const STAGES: {
   label: string;
   color: string;
   bgColor: string;
+  icon: React.ReactNode;
 }[] = [
-  { key: 'unlearned', label: '미암기', color: '#d63031', bgColor: '#ffe8e8' },
-  { key: 'learning', label: '암기중', color: '#e17055', bgColor: '#fff3e0' },
-  { key: 'mastered', label: '완료', color: '#00a86b', bgColor: '#e8f5e9' },
+  { key: 'unlearned', label: '미암기', color: '#d63031', bgColor: '#ffe8e8', icon: <HelpOutline /> },
+  { key: 'learning', label: '암기중', color: '#e17055', bgColor: '#fff3e0', icon: <School /> },
+  { key: 'mastered', label: '완료', color: '#00a86b', bgColor: '#e8f5e9', icon: <CheckCircle /> },
 ];
 
 // 단어 + 스테이지 정보
@@ -247,31 +257,41 @@ export default function Checklist() {
           }}
         />
 
-        {/* 필터 칩 + 토글 */}
+        {/* 필터 버튼 + 뜻 토글 */}
         <Stack direction="row" spacing={1} alignItems="center">
-          {/* 필터 칩 */}
+          {/* 필터 버튼 */}
           {STAGES.map((stage) => {
             const count = stats[stage.key];
             const isSelected = filterStage === stage.key;
 
             return (
-              <Chip
+              <Box
                 key={stage.key}
-                label={`${stage.label} ${count}`}
-                size="small"
                 onClick={() => setFilterStage(isSelected ? null : stage.key)}
                 sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
                   backgroundColor: isSelected ? stage.color : stage.bgColor,
                   color: isSelected ? '#fff' : stage.color,
-                  fontWeight: 600,
-                  border: isSelected ? 'none' : `1px solid ${stage.color}33`,
+                  border: isSelected ? `2px solid ${stage.color}` : `1px solid ${stage.color}44`,
                   '&:hover': {
-                    backgroundColor: isSelected
-                      ? stage.color
-                      : `${stage.color}22`,
+                    backgroundColor: isSelected ? stage.color : `${stage.color}33`,
                   },
                 }}
-              />
+              >
+                <Box sx={{ display: 'flex', fontSize: 18 }}>
+                  {stage.icon}
+                </Box>
+                <Typography variant="body2" fontWeight={600}>
+                  {count}
+                </Typography>
+              </Box>
             );
           })}
 
