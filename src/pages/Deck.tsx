@@ -25,10 +25,11 @@ const STAGES: {
   label: string;
   icon: React.ReactNode;
   color: string;
+  bgColor: string;
 }[] = [
-  { key: 'unlearned', label: '미암기', icon: <HelpOutline />, color: '#ff6b6b' },
-  { key: 'learning', label: '암기중', icon: <School />, color: '#ffd93d' },
-  { key: 'mastered', label: '완료', icon: <CheckCircle />, color: '#6bcb77' },
+  { key: 'unlearned', label: '미암기', icon: <HelpOutline />, color: '#d63031', bgColor: '#ffe8e8' },
+  { key: 'learning', label: '암기중', icon: <School />, color: '#e17055', bgColor: '#fff3e0' },
+  { key: 'mastered', label: '완료', icon: <CheckCircle />, color: '#00a86b', bgColor: '#e8f5e9' },
 ];
 
 export default function Deck() {
@@ -121,7 +122,9 @@ export default function Deck() {
                 label={`${stage.label} ${stats[stage.key]}`}
                 size="small"
                 sx={{
-                  backgroundColor: `${stage.color}22`,
+                  backgroundColor: stage.bgColor,
+                  color: stage.color,
+                  fontWeight: 600,
                   '& .MuiChip-icon': {
                     color: stage.color,
                   },
@@ -148,9 +151,11 @@ export default function Deck() {
           return (
             <Card
               key={stage.key}
+              elevation={isSelected ? 4 : 1}
               sx={{
-                border: isSelected ? `2px solid ${stage.color}` : '2px solid transparent',
-                backgroundColor: isSelected ? `${stage.color}11` : undefined,
+                border: isSelected ? `2px solid ${stage.color}` : '1px solid #e0e0e0',
+                backgroundColor: isSelected ? stage.bgColor : '#fff',
+                transition: 'all 0.2s ease',
               }}
             >
               <CardActionArea onClick={() => selectStage(stage.key)}>
@@ -162,11 +167,12 @@ export default function Deck() {
                         width: 48,
                         height: 48,
                         borderRadius: 2,
-                        backgroundColor: `${stage.color}22`,
+                        backgroundColor: isSelected ? '#fff' : stage.bgColor,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: stage.color,
+                        border: `1px solid ${stage.color}33`,
                       }}
                     >
                       {stage.icon}
@@ -174,17 +180,21 @@ export default function Deck() {
 
                     {/* 텍스트 */}
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle1" fontWeight="bold">
+                      <Typography 
+                        variant="subtitle1" 
+                        fontWeight="bold"
+                        sx={{ color: isSelected ? stage.color : '#333' }}
+                      >
                         {stage.label}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: '#666' }}>
                         {count}개 단어 ({percent}%)
                       </Typography>
                     </Box>
 
                     {/* 체크 표시 */}
                     {isSelected && (
-                      <CheckCircle sx={{ color: stage.color }} />
+                      <CheckCircle sx={{ color: stage.color, fontSize: 28 }} />
                     )}
                   </Box>
                 </CardContent>
