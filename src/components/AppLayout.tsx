@@ -21,7 +21,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import StyleIcon from '@mui/icons-material/Style';
-import QuizIcon from '@mui/icons-material/PlayListAddCheck';
+import QuizIcon from '@mui/icons-material/Quiz';
 import SettingsIcon from '@mui/icons-material/Settings';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import InfoIcon from '@mui/icons-material/Info';

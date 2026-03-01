@@ -1,3 +1,6 @@
+// 덱 관련 타입 re-export
+export * from './deck';
+
 export interface VocabWord {
   id: string;
   word: string;
