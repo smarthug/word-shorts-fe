@@ -210,13 +210,13 @@ interface DeckStats {
 - [x] Zustand 스토어 - `src/store/deckStore.ts`
 - [x] 네비게이션 변경 (Quiz → Checklist)
 
-### Phase 2: 덱 뷰 페이지 🔄 진행중
+### Phase 2: 덱 뷰 페이지 ✅ 완료
 
 - [x] 덱 이름 + 설명 표시
 - [x] 전체 진행률 바
 - [x] 암기 단계 선택 카드 UI
 - [x] 쇼츠 시작 버튼
-- [ ] 가독성/스타일 개선
+- [x] 가독성/스타일 개선
 
 ### Phase 3: 체크리스트 페이지
 
