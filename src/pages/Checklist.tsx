@@ -9,19 +9,18 @@ import {
   Paper,
   IconButton,
 } from '@mui/material';
-import { Search, ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { Search, ChevronLeft, ChevronRight, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useDeckStore } from '../store/deckStore';
 import type { MemorizationStage, Word } from '../types/deck';
 
 // 스테이지 설정
 const STAGES: {
-  key: MemorizationStage | 'all';
+  key: MemorizationStage;
   label: string;
   color: string;
   bgColor: string;
 }[] = [
-  { key: 'all', label: '전체', color: '#666', bgColor: '#f5f5f5' },
   { key: 'unlearned', label: '미암기', color: '#d63031', bgColor: '#ffe8e8' },
   { key: 'learning', label: '암기중', color: '#e17055', bgColor: '#fff3e0' },
   { key: 'mastered', label: '완료', color: '#00a86b', bgColor: '#e8f5e9' },
@@ -40,9 +39,10 @@ interface TableRowProps {
   word: WordWithStage;
   index: number;
   onMove: (wordId: string, to: MemorizationStage) => void;
+  showMeaning: boolean;
 }
 
-function TableRow({ word, index, onMove }: TableRowProps) {
+function TableRow({ word, index, onMove, showMeaning }: TableRowProps) {
   const stage = STAGES.find((s) => s.key === word.stage)!;
   const stageIndex = STAGE_ORDER.indexOf(word.stage);
   const canMoveLeft = stageIndex > 0;
@@ -93,9 +93,11 @@ function TableRow({ word, index, onMove }: TableRowProps) {
         <Typography fontWeight="bold" sx={{ color: '#333', fontSize: '0.95rem' }}>
           {word.word}
         </Typography>
-        <Typography variant="body2" sx={{ color: '#666', fontSize: '0.8rem' }} noWrap>
-          {word.meaning_kr || word.meaning_en}
-        </Typography>
+        {showMeaning && (
+          <Typography variant="body2" sx={{ color: '#666', fontSize: '0.8rem' }} noWrap>
+            {word.meaning_kr || word.meaning_en}
+          </Typography>
+        )}
       </Box>
 
       {/* 상태 배지 */}
@@ -130,7 +132,8 @@ function TableRow({ word, index, onMove }: TableRowProps) {
 
 export default function Checklist() {
   const [search, setSearch] = useState('');
-  const [filterStage, setFilterStage] = useState<MemorizationStage | 'all'>('all');
+  const [filterStage, setFilterStage] = useState<MemorizationStage | null>(null);
+  const [showMeaning, setShowMeaning] = useState(true);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const { getCurrentDeck, getDeckStats, moveWord, isLoading } = useDeckStore();
@@ -163,7 +166,7 @@ export default function Checklist() {
   const filteredWords = useMemo(() => {
     return allWords.filter((word) => {
       // 스테이지 필터
-      if (filterStage !== 'all' && word.stage !== filterStage) return false;
+      if (filterStage !== null && word.stage !== filterStage) return false;
 
       // 검색 필터
       if (search) {
@@ -244,11 +247,11 @@ export default function Checklist() {
           }}
         />
 
-        {/* 필터 칩 */}
-        <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5 }}>
+        {/* 필터 칩 + 토글 */}
+        <Stack direction="row" spacing={1} alignItems="center">
+          {/* 필터 칩 */}
           {STAGES.map((stage) => {
-            const count =
-              stage.key === 'all' ? stats.total : stats[stage.key];
+            const count = stats[stage.key];
             const isSelected = filterStage === stage.key;
 
             return (
@@ -256,7 +259,7 @@ export default function Checklist() {
                 key={stage.key}
                 label={`${stage.label} ${count}`}
                 size="small"
-                onClick={() => setFilterStage(stage.key)}
+                onClick={() => setFilterStage(isSelected ? null : stage.key)}
                 sx={{
                   backgroundColor: isSelected ? stage.color : stage.bgColor,
                   color: isSelected ? '#fff' : stage.color,
@@ -271,6 +274,24 @@ export default function Checklist() {
               />
             );
           })}
+
+          {/* 스페이서 */}
+          <Box sx={{ flex: 1 }} />
+
+          {/* 뜻 토글 버튼 */}
+          <IconButton
+            size="small"
+            onClick={() => setShowMeaning(!showMeaning)}
+            sx={{
+              color: showMeaning ? '#1976d2' : '#999',
+              backgroundColor: showMeaning ? '#e3f2fd' : '#f5f5f5',
+              '&:hover': {
+                backgroundColor: showMeaning ? '#bbdefb' : '#eee',
+              },
+            }}
+          >
+            {showMeaning ? <Visibility /> : <VisibilityOff />}
+          </IconButton>
         </Stack>
       </Box>
 
@@ -324,7 +345,7 @@ export default function Checklist() {
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
                 >
-                  <TableRow word={word} index={virtualItem.index} onMove={handleMove} />
+                  <TableRow word={word} index={virtualItem.index} onMove={handleMove} showMeaning={showMeaning} />
                 </Box>
               );
             })}
