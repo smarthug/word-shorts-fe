@@ -21,7 +21,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import StyleIcon from '@mui/icons-material/Style';
-import QuizIcon from '@mui/icons-material/PlayListAddCheck';
+import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import SettingsIcon from '@mui/icons-material/Settings';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import InfoIcon from '@mui/icons-material/Info';
@@ -29,7 +29,7 @@ import InfoIcon from '@mui/icons-material/Info';
 const tabs = [
   { label: 'Deck', icon: <StyleIcon />, path: '/deck' },
   { label: 'Shorts', icon: <OndemandVideoIcon />, path: '/' },
-  { label: 'Quiz', icon: <QuizIcon />, path: '/quiz' },
+  { label: 'Checklist', icon: <PlaylistAddCheckIcon />, path: '/checklist' },
 ];
 
 const drawerItems = [

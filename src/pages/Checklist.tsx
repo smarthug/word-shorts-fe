@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 
-export default function Quiz() {
+export default function Checklist() {
   return (
     <Box
       sx={{
@@ -11,7 +11,7 @@ export default function Quiz() {
       }}
     >
       <Typography variant="h5" color="text.secondary">
-        Quiz - Coming Soon
+        Checklist - Coming Soon
       </Typography>
     </Box>
   );
