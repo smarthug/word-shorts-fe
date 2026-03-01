@@ -256,39 +256,52 @@ export const db = new WordShortsDB();
 
 ---
 
-## 🤔 논의 필요 사항
+## ✅ 기술 결정 사항 (2026-03-01 확정)
 
-### 1. IndexedDB Wrapper 선택
+### 1. IndexedDB Wrapper: **Dexie.js** ✅
 
-| 라이브러리 | 장점 | 단점 |
-|-----------|------|------|
-| **Dexie.js** | 문서 풍부, 커뮤니티 큼, 타입스크립트 지원 | 번들 크기 (29KB) |
-| **idb** | 경량 (1.4KB), Google 개발 | 기능 제한적 |
+- 문서 풍부, 커뮤니티 큼
+- 타입스크립트 지원 우수
+- 복잡한 쿼리, 마이그레이션 지원
 
-**추천**: Dexie.js (복잡한 쿼리, 마이그레이션 지원)
+```bash
+npm install dexie
+```
 
-### 2. Virtualization 라이브러리
+### 2. Virtualization: **@tanstack/react-virtual** ✅
 
-| 라이브러리 | 장점 | 단점 |
-|-----------|------|------|
-| **@tanstack/react-virtual** | 최신, 경량, 유연 | |
-| **react-virtualized** | 성숙, 기능 풍부 | 오래됨 |
-| **react-window** | react-virtualized 경량버전 | |
+- 최신, 경량, 유연
+- React 18 호환
 
-**추천**: @tanstack/react-virtual
+```bash
+npm install @tanstack/react-virtual
+```
 
-### 3. 기존 데이터 마이그레이션
+### 3. 데이터 전략: **로컬 우선 (Local-First)** ✅
 
-- 현재 124개 단어 → 첫 번째 덱으로 변환
-- API에서 가져오는 방식 유지? vs 로컬 우선?
+```
+앱 시작
+  ↓
+IndexedDB에 덱 있음?
+  ├─ YES → 로컬 데이터 사용 (빠름!)
+  └─ NO  → API에서 가져와서 IndexedDB에 저장
+              ↓
+         다음부터는 로컬 사용
+```
+
+**장점:**
+- 첫 로딩만 API 호출
+- 이후 오프라인에서도 작동
+- 암기 진행률이 로컬에 저장됨
+- 나중에 "덱 새로고침" 버튼으로 API에서 다시 가져오기 가능
 
 ---
 
 ## 🚀 다음 단계
 
-1. 이 문서 검토 및 피드백
-2. 기술 선택 확정 (Dexie? @tanstack/react-virtual?)
-3. Phase 1 시작
+1. ~~이 문서 검토 및 피드백~~ ✅
+2. ~~기술 선택 확정~~ ✅
+3. **Phase 1 시작** ← 현재
 
 ---
 
