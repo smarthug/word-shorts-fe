@@ -18,13 +18,15 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
-import StyleIcon from '@mui/icons-material/Style';
-import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
-import SettingsIcon from '@mui/icons-material/Settings';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import InfoIcon from '@mui/icons-material/Info';
+import {
+  Menu as MenuIcon,
+  OndemandVideo as OndemandVideoIcon,
+  Style as StyleIcon,
+  PlaylistAddCheck as PlaylistAddCheckIcon,
+  Settings as SettingsIcon,
+  BarChart as BarChartIcon,
+  Info as InfoIcon,
+} from '@mui/icons-material';
 
 const tabs = [
   { label: 'Deck', icon: <StyleIcon />, path: '/deck' },
