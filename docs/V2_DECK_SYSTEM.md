@@ -287,4 +287,89 @@ IndexedDB에 덱 있음?
 
 ---
 
+## 🔮 향후 최적화 (10만개 단어 대응)
+
+### 문제점
+
+현재 ID 배열 구조에서 10만개 단어 시:
+
+```typescript
+// 현재: O(n) 연산
+unlearned.filter(id => id !== wordId);  // 10만번 비교
+```
+
+### 해결책: Immer + Set
+
+#### 1. Immer (문법 편의 + 불변성)
+
+```bash
+npm install immer
+```
+
+**장점:**
+- 직관적 문법 (mutable처럼 쓰고 immutable하게 동작)
+- Zustand 공식 미들웨어 지원
+- 번들 작음 (~3KB gzip)
+- 구조적 공유 (변경 안 된 부분 복사 안 함)
+
+```typescript
+import { immer } from 'zustand/middleware/immer';
+
+const useDeckStore = create(immer((set) => ({
+  moveWord: (wordId, to) => set((state) => {
+    // 직접 수정처럼 쓰지만 immutable
+    state.deck.unlearned.delete(wordId);
+    state.deck[to].add(wordId);
+  }),
+})));
+```
+
+#### 2. Set (성능)
+
+**ID 저장을 Array → Set으로 변경:**
+
+| 방식 | 삭제 | 추가 | 검색 |
+|------|------|------|------|
+| Array | O(n) | O(1) | O(n) |
+| **Set** | **O(1)** | **O(1)** | **O(1)** |
+
+```typescript
+// 변경 전
+interface Deck {
+  unlearned: string[];    // Array
+  learning: string[];
+  mastered: string[];
+}
+
+// 변경 후
+interface Deck {
+  unlearned: Set<string>; // Set
+  learning: Set<string>;
+  mastered: Set<string>;
+}
+```
+
+**IndexedDB 저장 시 직렬화:**
+```typescript
+// 저장: Set → Array
+const toStore = { ...deck, unlearned: [...deck.unlearned] };
+
+// 로드: Array → Set
+const fromStore = { ...data, unlearned: new Set(data.unlearned) };
+```
+
+#### 3. 대안: Immutable.js
+
+더 큰 규모나 복잡한 구조 시 고려:
+
+```bash
+npm install immutable
+```
+
+- 구조적 공유 내장
+- Set, Map, List 등 제공
+- 번들 ~60KB (더 큼)
+
+---
+
 *마지막 업데이트: 2026-03-01*
