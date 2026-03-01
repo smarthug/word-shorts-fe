@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -7,8 +7,9 @@ import {
   Chip,
   Stack,
   Paper,
+  IconButton,
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { Search, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useDeckStore } from '../store/deckStore';
 import type { MemorizationStage, Word } from '../types/deck';
@@ -31,14 +32,33 @@ interface WordWithStage extends Word {
   stage: MemorizationStage;
 }
 
+// 스테이지 순서
+const STAGE_ORDER: MemorizationStage[] = ['unlearned', 'learning', 'mastered'];
+
 // 테이블 행 컴포넌트
 interface TableRowProps {
   word: WordWithStage;
   index: number;
+  onMove: (wordId: string, to: MemorizationStage) => void;
 }
 
-function TableRow({ word, index }: TableRowProps) {
+function TableRow({ word, index, onMove }: TableRowProps) {
   const stage = STAGES.find((s) => s.key === word.stage)!;
+  const stageIndex = STAGE_ORDER.indexOf(word.stage);
+  const canMoveLeft = stageIndex > 0;
+  const canMoveRight = stageIndex < STAGE_ORDER.length - 1;
+
+  const handleMoveLeft = () => {
+    if (canMoveLeft) {
+      onMove(word.id, STAGE_ORDER[stageIndex - 1]);
+    }
+  };
+
+  const handleMoveRight = () => {
+    if (canMoveRight) {
+      onMove(word.id, STAGE_ORDER[stageIndex + 1]);
+    }
+  };
 
   return (
     <Paper
@@ -46,8 +66,8 @@ function TableRow({ word, index }: TableRowProps) {
       sx={{
         display: 'flex',
         alignItems: 'center',
-        px: 2,
-        py: 1.5,
+        px: 1,
+        py: 1,
         mx: 1,
         mb: 1,
         borderRadius: 2,
@@ -55,24 +75,25 @@ function TableRow({ word, index }: TableRowProps) {
         border: '1px solid #eee',
       }}
     >
-      {/* 번호 */}
-      <Typography
+      {/* 왼쪽 이동 버튼 */}
+      <IconButton
+        size="small"
+        onClick={handleMoveLeft}
+        disabled={!canMoveLeft}
         sx={{
-          width: 32,
-          color: 'text.secondary',
-          fontSize: '0.875rem',
-          fontWeight: 500,
+          opacity: canMoveLeft ? 1 : 0.3,
+          color: canMoveLeft ? '#666' : '#ccc',
         }}
       >
-        {index + 1}
-      </Typography>
+        <ChevronLeft />
+      </IconButton>
 
       {/* 단어 + 뜻 */}
-      <Box sx={{ flex: 1, minWidth: 0, ml: 1 }}>
-        <Typography fontWeight="bold" sx={{ color: '#333' }}>
+      <Box sx={{ flex: 1, minWidth: 0, mx: 1 }}>
+        <Typography fontWeight="bold" sx={{ color: '#333', fontSize: '0.95rem' }}>
           {word.word}
         </Typography>
-        <Typography variant="body2" sx={{ color: '#666' }} noWrap>
+        <Typography variant="body2" sx={{ color: '#666', fontSize: '0.8rem' }} noWrap>
           {word.meaning_kr || word.meaning_en}
         </Typography>
       </Box>
@@ -85,10 +106,24 @@ function TableRow({ word, index }: TableRowProps) {
           backgroundColor: stage.bgColor,
           color: stage.color,
           fontWeight: 600,
-          fontSize: '0.75rem',
-          height: 26,
+          fontSize: '0.7rem',
+          height: 24,
+          minWidth: 50,
         }}
       />
+
+      {/* 오른쪽 이동 버튼 */}
+      <IconButton
+        size="small"
+        onClick={handleMoveRight}
+        disabled={!canMoveRight}
+        sx={{
+          opacity: canMoveRight ? 1 : 0.3,
+          color: canMoveRight ? '#666' : '#ccc',
+        }}
+      >
+        <ChevronRight />
+      </IconButton>
     </Paper>
   );
 }
@@ -98,7 +133,7 @@ export default function Checklist() {
   const [filterStage, setFilterStage] = useState<MemorizationStage | 'all'>('all');
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const { getCurrentDeck, getDeckStats, isLoading } = useDeckStore();
+  const { getCurrentDeck, getDeckStats, moveWord, isLoading } = useDeckStore();
   const deck = getCurrentDeck();
   const stats = getDeckStats();
 
@@ -150,6 +185,13 @@ export default function Checklist() {
     estimateSize: () => 72,
     overscan: 10,
   });
+
+  const handleMove = useCallback(
+    (wordId: string, to: MemorizationStage) => {
+      moveWord(wordId, to);
+    },
+    [moveWord]
+  );
 
   if (isLoading || !deck || !stats) {
     return (
@@ -282,7 +324,7 @@ export default function Checklist() {
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
                 >
-                  <TableRow word={word} index={virtualItem.index} />
+                  <TableRow word={word} index={virtualItem.index} onMove={handleMove} />
                 </Box>
               );
             })}
