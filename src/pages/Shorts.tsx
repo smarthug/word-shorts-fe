@@ -87,17 +87,22 @@ export default function Shorts() {
   const [ttsEnabled] = useState(true);
 
   // 덱 스토어
-  const { getCurrentWords, currentStage, moveWord, isLoading: deckLoading } = useDeckStore();
+  const { getCurrentWords, currentStage, moveWord, isLoading: deckLoading, isInitialized } = useDeckStore();
   const currentWords = getCurrentWords();
 
   // slug 배열 (덱 스토어에서)
   const WORDS = useMemo(() => currentWords.map(w => w.slug), [currentWords]);
+
+  // 디버그
+  console.log('[Shorts] deckLoading:', deckLoading, 'isInitialized:', isInitialized, 'currentWords:', currentWords.length, 'WORDS:', WORDS.length);
 
   // 스와이프 TTS 재생 추적용
   const lastSpokenRef = useRef<string>('');
 
   // API에서 메타데이터 가져오기
   useEffect(() => {
+    console.log('[Shorts useEffect] WORDS.length:', WORDS.length);
+    
     if (WORDS.length === 0) {
       setLoading(false);
       return;
@@ -105,6 +110,7 @@ export default function Shorts() {
 
     const fetchAllWords = async () => {
       setLoading(true);
+      console.log('[Shorts] Fetching', WORDS.length, 'words...');
       const dataMap: Record<string, WordData> = {};
 
       await Promise.all(
@@ -231,7 +237,7 @@ export default function Shorts() {
     return '완료됨';
   }, [currentStage]);
 
-  if (loading || deckLoading) {
+  if (loading || deckLoading || !isInitialized) {
     return (
       <Box
         sx={{
