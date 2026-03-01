@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Virtual, Mousewheel } from 'swiper/modules';
-import { Box, Typography, CircularProgress, IconButton } from '@mui/material';
+import { Box, Typography, CircularProgress, IconButton, Chip } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { useDeckStore } from '../store/deckStore';
 
 // @ts-ignore
 import 'swiper/css';
@@ -14,26 +16,12 @@ import 'swiper/css/virtual';
 
 const API_BASE = 'https://word-shorts-api.kirklayer6590.workers.dev';
 
-// 124개 단어
-const WORDS = [
-  'abrupt', 'absurd', 'account-for', 'afford', 'affordable', 'aftereffect', 'aftermath', 'allocate',
-  'amends', 'annihilate', 'ascend', 'ascendant', 'assure', 'astoundingly', 'atone', 'authenticate',
-  'call-upon', 'colossal', 'compensate-for', 'comprehensive', 'comprise', 'conclusive', 'conjunction',
-  'conjure', 'conspicuous', 'constitute', 'contemporary', 'contour', 'contradiction', 'conventionally',
-  'conversely', 'count-on', 'decline', 'deliberate', 'depend-on', 'diffuse', 'discard', 'dominant',
-  'drastically', 'eliminate', 'emanate', 'encourage', 'encroachment', 'engrave', 'entire', 'evaluate',
-  'examine', 'exclude', 'exploit', 'extant', 'exterminate', 'externally', 'fluctuation', 'genuine',
-  'grow-accustomed-to', 'hamper', 'hinder', 'heterogeneous', 'implausible', 'impressive', 'indigenous',
-  'inhabit', 'instigate', 'intrigue', 'intrusion', 'investigate', 'invoke', 'irrevocable', 'justified',
-  'keep-out-of', 'leave-out', 'look-into', 'magnify', 'malleable', 'matchless', 'mature', 'mean',
-  'mechanics', 'monotonous', 'neglect', 'notable', 'no-wonder', 'obsess', 'obsession-with', 'offset',
-  'optimize', 'paradox', 'particular', 'peerless', 'perfect', 'pervasive', 'pillar', 'pinpoint',
-  'postulate', 'prolific', 'prominent', 'promptly', 'recall', 'refine', 'regard', 'regarding',
-  'replenish', 'robust', 'sedentary', 'sequentially', 'sleek', 'slight', 'solid', 'straightaway',
-  'strenuous', 'stunted', 'sturdy', 'subdue', 'substantial', 'substantiate', 'successively',
-  'superficially', 'supplant', 'susceptible-to', 'unprecedented', 'unrivaled', 'unsophisticated',
-  'vanquish', 'virtually'
-];
+// 스테이지 라벨
+const STAGE_LABELS = {
+  unlearned: '미암기',
+  learning: '암기중',
+  mastered: '완료',
+} as const;
 
 
 interface ImageInfo {
@@ -98,11 +86,23 @@ export default function Shorts() {
   const [showMeaning, setShowMeaning] = useState(true);
   const [ttsEnabled] = useState(true);
 
+  // 덱 스토어
+  const { getCurrentWords, currentStage, moveWord, isLoading: deckLoading } = useDeckStore();
+  const currentWords = getCurrentWords();
+
+  // slug 배열 (덱 스토어에서)
+  const WORDS = useMemo(() => currentWords.map(w => w.slug), [currentWords]);
+
   // 스와이프 TTS 재생 추적용
   const lastSpokenRef = useRef<string>('');
 
   // API에서 메타데이터 가져오기
   useEffect(() => {
+    if (WORDS.length === 0) {
+      setLoading(false);
+      return;
+    }
+
     const fetchAllWords = async () => {
       setLoading(true);
       const dataMap: Record<string, WordData> = {};
@@ -126,7 +126,7 @@ export default function Shorts() {
     };
 
     fetchAllWords();
-  }, []);
+  }, [WORDS]);
 
   // 단어별 슬라이드 데이터
   const wordSlides = useMemo(() => {
@@ -209,9 +209,29 @@ export default function Shorts() {
     }
   }, [currentWordIndex, wordSlides]);
 
+  // 암기 버튼 핸들러
+  const handleMemorize = useCallback(() => {
+    const word = currentWords[currentWordIndex];
+    if (!word) return;
+
+    if (currentStage === 'unlearned') {
+      moveWord(word.id, 'learning');
+    } else if (currentStage === 'learning') {
+      moveWord(word.id, 'mastered');
+    }
+    // mastered 상태에서는 아무것도 안 함
+  }, [currentWordIndex, currentWords, currentStage, moveWord]);
+
   const currentWord = wordSlides[currentWordIndex];
 
-  if (loading) {
+  // 암기 버튼 라벨
+  const memorizeLabel = useMemo(() => {
+    if (currentStage === 'unlearned') return '암기중으로';
+    if (currentStage === 'learning') return '완료로';
+    return '완료됨';
+  }, [currentStage]);
+
+  if (loading || deckLoading) {
     return (
       <Box
         sx={{
@@ -227,25 +247,67 @@ export default function Shorts() {
     );
   }
 
+  if (WORDS.length === 0) {
+    return (
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: '#000',
+          color: '#fff',
+          gap: 2,
+        }}
+      >
+        <Typography variant="h6">
+          {STAGE_LABELS[currentStage]} 단어가 없습니다
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+          Deck 페이지에서 다른 단계를 선택하세요
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ height: '100%', bgcolor: '#000', position: 'relative' }}>
-      {/* 상단 카운터 */}
+      {/* 상단 카운터 + 스테이지 */}
       <Box
         sx={{
           position: 'absolute',
           top: 16,
           left: 16,
           zIndex: 10,
-          color: '#fff',
-          bgcolor: 'rgba(0,0,0,0.5)',
-          px: 2,
-          py: 0.5,
-          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
         }}
       >
-        <Typography variant="body2">
-          {currentWordIndex + 1} / {WORDS.length}
-        </Typography>
+        <Box
+          sx={{
+            color: '#fff',
+            bgcolor: 'rgba(0,0,0,0.5)',
+            px: 2,
+            py: 0.5,
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="body2">
+            {currentWordIndex + 1} / {WORDS.length}
+          </Typography>
+        </Box>
+        <Chip
+          label={STAGE_LABELS[currentStage]}
+          size="small"
+          sx={{
+            bgcolor: currentStage === 'unlearned' ? '#d63031' :
+                     currentStage === 'learning' ? '#e17055' : '#00a86b',
+            color: '#fff',
+            fontWeight: 600,
+          }}
+        />
       </Box>
 
       {/* 스와이프 힌트 */}
@@ -337,6 +399,29 @@ export default function Shorts() {
             사전
           </Typography>
         </Box>
+
+        {/* 암기 버튼 */}
+        {currentStage !== 'mastered' && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <IconButton
+              onClick={handleMemorize}
+              sx={{
+                bgcolor: currentStage === 'unlearned' ? '#e17055' : '#00a86b',
+                color: '#fff',
+                '&:hover': {
+                  bgcolor: currentStage === 'unlearned' ? '#d35400' : '#00875a',
+                },
+                width: 48,
+                height: 48,
+              }}
+            >
+              <CheckCircleIcon />
+            </IconButton>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+              {memorizeLabel}
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* 세로 Swiper: 단어 간 이동 */}
